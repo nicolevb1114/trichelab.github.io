@@ -1,0 +1,123 @@
+---
+format: 
+  live-revealjs:
+    margin: 0.05
+    theme: default
+    smaller: true
+    slide-number: true
+    html-math-method: mathjax
+    include-before: [ '<script type="text/x-mathjax-config">MathJax.Hub.Config({tex2jax: {enableAssistiveMml: false}});</script>']
+    footer: "[Source code](https://github.com/trichelab/trichelab.github.io/blob/gh-pages/slides/GammaPoisson/index.qmd)"
+engine: knitr
+title: "Gamma-Poisson derivation and sampling"
+author: "Tim Triche, Jr."
+institute: "Van Andel Institute"
+webr:
+  packages: 
+    - ggplot2
+    - ggbeeswarm
+pyodide:
+  packages:
+    - scipy
+    - plotnine
+execute: 
+  warning: false
+---
+{{< include ./_extensions/r-wasm/live/_knitr.qmd >}}
+
+
+
+## The Poisson distribution
+
+Suppose we have a process where events occur rarely, with varying times between
+events, but over a long period we can guess reasonably well how many will occur.
+
+A classic example is radioactive decay. At any given instant, I can't tell you
+whether a particle from an isotope will be detected. But if you tell me the its
+half-life, I guess how many events you'll see in a day, a year, or a century.
+
+In the above case, the rate of decay has a fixed intensity, $\lambda$, and we 
+can make statements about its emissions $X$ per unit time or space. We say 
+$X \sim Pois(\lambda)$: "$X$ is Poisson-distributed with intensity $\lambda$".
+
+$$
+\begin{align}
+E\left[X\right] &= \lambda \\
+Var\left[X\right] &= \lambda \\
+Pr(X=k|\lambda) &= \frac{\lambda^{k}}{k!}e^{-\lambda}
+\end{align}
+$$
+
+---
+
+
+
+## The exponential distribution
+
+Suppose that instead of the _number_ of events, such as particle emissions, we
+instead want to keep track of _how long_ it takes between emissions. You might
+think that we could just divide the total time by the number of emissions, and 
+of course that is the mean. But we can do better.
+
+Suppose $Y$ is the time we wait between each successive event. If the intensity 
+$\lambda$, is fixed as previously, the mean of $Y$ will be $\frac{1}{\lambda},
+and its variance will be $\frac{1}{\lambda^2}$. We say $Y \sim Exp(\lambda)$:
+"$Y$ is exponentially distributed with intensity $\lambda$".
+
+We can relate $Y \sim Exp(\lambda)$ to $X \sim Pois(\lambda)$: the probability
+of $k$ events per unit observation is the probability $\sum^{k}_{i=1}Y_i$ <= 1. 
+
+$$
+\begin{align}
+Pr(0|\lambda) &= e^{-\lambda} \\
+Pr(1|\lambda) &= \lambda e^{-\lambda} \\
+Pr(2|\lambda) &= \frac{\lambda^2}{2!} e^{-\lambda} \\
+Pr(3|\lambda) &= \frac{\lambda^3}{3!} e^{-\lambda} \\
+... \\
+Pr(k|\lambda) &= \frac{\lambda^k}{k!} e^{-\lambda}
+\end{align}
+$$
+
+If the probability of an event per unit observation $\lambda = \frac{1}{10}$, 
+the mean number of observations between events will be $\frac{1}{\lambda} = 10$.
+
+```{webr}
+n = 1000
+lambda = 0.1
+Y = rexp(n=n, rate=lambda)
+mean(Y) - (1 / lambda) # small number
+hist(Y)
+```
+
+---
+
+
+
+## The Gamma distribution
+
+Suppose we have $j$ exponentially distributed processes $Y_j \sim Exp(\lambda)$,
+each with intensity $\lambda$. This is a special case of the Gamma distribution.
+
+If $Z = \sum^{j}_{i=1} Y_j$, then $Z \sim Gamma(j, \lambda)$, and 
+
+$$
+\begin{align}
+Pr(Z=z|j,\lambda) &= \frac{z^{j-1}e^{-z/\lambda}}{\lambda^j\Gamma(j)} \\
+\text{Where} \\
+\Gamma(n) &= (n - 1)!
+\end{align}
+$$
+
+Since $E\left[ Z \right] = \sum^{j}_{i=1} E\left[ Y_j \right]$, 
+$E\left[ Z \right] = j E\left[ Y \right] = \frac{j}{\lambda}$, and 
+$Var\left[ Z \right] = j Var\left[ Y \right] = \frac{j}{\lambda^2}.
+
+---
+
+
+
+## The Poisson-Gamma distribution
+
+
+
+--- 
