@@ -29,16 +29,14 @@ execute:
 
 ## The Poisson distribution
 
-Suppose we have a process where events occur rarely, with varying times between
-events, but over a long period we can guess reasonably well how many will occur.
+Suppose we have rare events that occur at varying times but at a steady rate. 
 
-A classic example is radioactive decay. At any given instant, I can't tell you
-whether a particle from an isotope will be detected. But if you tell me the its
-half-life, I guess how many events you'll see in a day, a year, or a century.
+A classic example is radioactive decay. At any instant, I can't tell you if a 
+particle will be detected. But if you tell me the isotopic half-life, I can 
+guess how many events you'll see in a day, year, or century. If the intensity
+of decay is $\lambda$, we can reason about its emissions $X$.
 
-In the above case, the rate of decay has a fixed intensity, $\lambda$, and we 
-can make statements about its emissions $X$ per unit time or space. We say 
-$X \sim Pois(\lambda)$: "$X$ is Poisson-distributed with intensity $\lambda$".
+We say $X \sim Pois(\lambda)$: "$X$ is Poisson with intensity $\lambda$".
 
 $$
 \begin{align}
@@ -54,29 +52,32 @@ $$
 
 ## The exponential distribution
 
-Suppose that instead of the _number_ of events, such as particle emissions, we
-instead want to keep track of _how long_ it takes between emissions. You might
-think that we could just divide the total time by the number of emissions, and 
-of course that is the mean. But we can do better.
+Suppose instead of the _number_ of events $X$, we track _time_ between events as
+$Y$. 
 
-Suppose $Y$ is the time we wait between each successive event. If the intensity 
-$\lambda$, is fixed as previously, the mean of $Y$ will be $\frac{1}{\lambda},
-and its variance will be $\frac{1}{\lambda^2}$. We say $Y \sim Exp(\lambda)$:
-"$Y$ is exponentially distributed with intensity $\lambda$".
+Then $Y \sim Exp(\lambda)$: "$Y$ is exponential with intensity $\lambda$".
 
-We can relate $Y \sim Exp(\lambda)$ to $X \sim Pois(\lambda)$: the probability
-of $k$ events per unit observation is the probability $\sum^{k}_{i=1}Y_i$ <= 1. 
+$$
+E\left[Y\right] = \frac{1}{\lambda}
+$$
+
+The probability of $k$ events per observation $X$ is 
+$Pr(\sum^{k}_{i=1}Y_i \leq 1)$:
 
 $$
 \begin{align}
 Pr(0|\lambda) &= e^{-\lambda} \\
 Pr(1|\lambda) &= \lambda e^{-\lambda} \\
 Pr(2|\lambda) &= \frac{\lambda^2}{2!} e^{-\lambda} \\
-Pr(3|\lambda) &= \frac{\lambda^3}{3!} e^{-\lambda} \\
 ... \\
 Pr(k|\lambda) &= \frac{\lambda^k}{k!} e^{-\lambda}
 \end{align}
 $$
+
+---
+
+
+## Poisson / exponential demo
 
 If the probability of an event per unit observation $\lambda = \frac{1}{10}$, 
 the mean number of observations between events will be $\frac{1}{\lambda} = 10$.
@@ -95,29 +96,64 @@ hist(Y)
 
 ## The Gamma distribution
 
-Suppose we have $j$ exponentially distributed processes $Y_j \sim Exp(\lambda)$,
-each with intensity $\lambda$. This is a special case of the Gamma distribution.
+Suppose we have $j$ exponentially distributed processes $Y_j \sim Exp(\lambda)$.
 
-If $Z = \sum^{j}_{i=1} Y_j$, then $Z \sim Gamma(j, \lambda)$, and 
+If $Z = \sum^{j}_{i=1} Y_j$, we can model the sum as $Z \sim Gamma(j, \lambda)$:
 
 $$
 \begin{align}
-Pr(Z=z|j,\lambda) &= \frac{z^{j-1}e^{-z/\lambda}}{\lambda^j\Gamma(j)} \\
-\text{Where} \\
-\Gamma(n) &= (n - 1)!
+E\left[Z\right] &= \sum^{j}_{i=1} E\left[Y_j\right] = \frac{j}{\lambda} \\
+Var\left[Z\right] &= \sum^{j}_{i=1} Var\left[Y_j\right] = \frac{j}{\lambda^2}\\
+Pr(Z=z|j,\lambda) &= \frac{z^{j-1}e^{-z/\lambda}}{\lambda^j\Gamma(j)}, 
+                     \text{where}\ \Gamma(n) = (n - 1)!
 \end{align}
 $$
-
-Since $E\left[ Z \right] = \sum^{j}_{i=1} E\left[ Y_j \right]$, 
-$E\left[ Z \right] = j E\left[ Y \right] = \frac{j}{\lambda}$, and 
-$Var\left[ Z \right] = j Var\left[ Y \right] = \frac{j}{\lambda^2}.
 
 ---
 
 
 
-## The Poisson-Gamma distribution
+## Gamma-Poisson distribution: background
 
+Now we have the pieces to reconstruct a Poisson process across discrete samples.
+We can reason about how variable $\lambda$ really is, both within and across 
+samples, using a model that captures the sampling distribution of $\lambda$.
 
+Suppose we look at inherited genetic variants in the general population; in a 
+disease; and in a specific type or age group of disease. We might wonder whether
+the rates of inherited genetic variants (of any sort!) are in each group, and 
+we might wonder how strong the evidence is for differences between groups. But
+if the disease is rare, we know that our estimate of $\lambda$ cannot be as 
+precise as it would be if the disease was common, because we simply don't have 
+as many observations. The Gamma-Poisson distribution helps us represent this 
+inherent imprecision in our simulations and reason a
 
 --- 
+
+
+
+## Gamma-Poisson distribution: simple case
+
+Let's make our examples concrete by looking at germline genetic variants in 
+an unselected control population, versus genetic variants in leukemia patients.
+We will assume that clinically relevant genetic variants are somewhat rare, but
+previous studies have confirmed that at least 5% of leukemia patients harbor 
+inherited genetic variants which are rare in the general population. 
+
+--- 
+
+
+
+## Gamma-Poisson distribution: more uses
+
+Recall that one type of Gamma distribution is the sum of exponential processes.
+
+A statistical model for graph traversal is the exponential random graph model, 
+or Erdos-Renyi model, where the number of edges (connections) from any given
+node (such as a gene, or a protein-protein interaction) is exponential. 
+
+Since the sum of traversal times for disconnected graph components is a sum of
+exponential processes under this random graph model, we can test the hypothesis
+that the intensity of emissions ("hops" before hitting a gene variant, whether 
+inherited or acquired) is the same across disease subtypes, and we can do this 
+with an amended graph that reflects any protein-protein fusions in a patient:
