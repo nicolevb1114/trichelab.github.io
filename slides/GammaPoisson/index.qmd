@@ -14,17 +14,13 @@ author: "Tim Triche, Jr."
 institute: "Van Andel Institute"
 webr:
   packages: 
+    - datasets
     - ggplot2
     - ggbeeswarm
-pyodide:
-  packages:
-    - scipy
-    - plotnine
 execute: 
   warning: false
 ---
 {{< include ./_extensions/r-wasm/live/_knitr.qmd >}}
-
 
 
 ## The Poisson distribution
@@ -52,8 +48,7 @@ $$
 
 ## The exponential distribution
 
-Suppose instead of the _number_ of events $X$, we track _time_ between events as
-$Y$. 
+Suppose instead of _number_ of events, $X$, we track _time_ between events, $Y$.
 
 Then $Y \sim Exp(\lambda)$: "$Y$ is exponential with intensity $\lambda$".
 
@@ -77,6 +72,7 @@ $$
 ---
 
 
+
 ## Poisson / exponential demo
 
 If the probability of an event per unit observation $\lambda = \frac{1}{10}$, 
@@ -93,6 +89,57 @@ hist(Y)
 ---
 
 
+
+## The binomial distribution
+
+Suppose I don't care how many times an event happens, so much as _whether_ it 
+happens to an individual. For example, whether someone dies, or is admitted to 
+a UC Berkeley graduate program. We might want to model the importance of factors
+to the outcome. One way to do this is with a binomial random variable $X$, where
+the number of individuals who could experience the event is $n$, the probability
+of experiencing the event is $p$, and we say $X \sim Bin(n, p)$. Then
+
+$$
+\begin{align}
+Pr(X = k | n, p) &= \binom{n}{k} p^{k} \left( 1 - p \right)^{n-k} \\
+\binom{n}{k} &= \frac{n!}{k! \left( n - k \right)!} \\
+E\left[X\right] &= np \\
+Var\left[X\right] &= np(1-p)
+\end{align}
+$$
+
+If we model the probability $p$ of the event and use the _logistic_ function,
+$\text{logit}(p) = log\frac{p}{1-p}$, we can perform _logistic regression_. 
+Since $\text{logit}(p)$ can potentially be infinite, we can't perform a least-
+squares fit the way we might for a linear model. But we can finesse this by
+maximizing the likelihood (joint probability of seeing the observed data.
+
+In the next slide we will see an example. For more details on maximum likelihood
+and estimation of logistic models, [see this notebook](https://rpubs.com/ttriche/1011627).
+
+---
+
+
+
+### Logistic regression, part 1
+
+Let's model the importance of sex in graduate admissions at Berkeley.
+The `UCBAdmissions` data is included with R, in the `datasets` library.
+(Need to modify this a bit to reflect the use of Freq rather than 0/1).
+
+```{webr}
+class(UCBAdmissions)
+berk.data = as.data.frame(UCBAdmissions)
+berk.data$Gender = relevel(berk.data$Gender, ref='Female')
+berk.data$Dept = relevel(berk.data$Dept, ref='F')
+berk.data$Outcome = with(berk.data, ifelse(Admit == "Admitted", 1, 0))
+berk.fit = glm(Outcome ~ Gender + Dept, family=binomial(), data=berk.data)
+
+```
+
+
+
+---
 
 ## The Gamma distribution
 
@@ -113,7 +160,7 @@ $$
 
 
 
-## Gamma-Poisson distribution: background
+## Gamma-Poisson background
 
 Now we have the pieces to reconstruct a Poisson process across discrete samples.
 We can reason about how variable $\lambda$ really is, both within and across 
@@ -132,7 +179,7 @@ inherent imprecision in our simulations and reason a
 
 
 
-## Gamma-Poisson distribution: simple case
+## Gamma-Poisson: simple case
 
 Let's make our examples concrete by looking at germline genetic variants in 
 an unselected control population, versus genetic variants in leukemia patients.
@@ -144,7 +191,7 @@ inherited genetic variants which are rare in the general population.
 
 
 
-## Gamma-Poisson distribution: more uses
+## Gamma-Poisson: more uses
 
 Recall that one type of Gamma distribution is the sum of exponential processes.
 
@@ -157,3 +204,12 @@ exponential processes under this random graph model, we can test the hypothesis
 that the intensity of emissions ("hops" before hitting a gene variant, whether 
 inherited or acquired) is the same across disease subtypes, and we can do this 
 with an amended graph that reflects any protein-protein fusions in a patient:
+
+---
+
+
+
+## Gamma-Poisson: even more
+
+(overdispersed loglinear models)
+
