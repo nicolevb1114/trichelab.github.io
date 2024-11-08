@@ -15,17 +15,87 @@ institute: "Van Andel Institute"
 webr:
   packages: 
     - datasets
+    - glmGamPoi
     - ggplot2
+    - ggraph
     - ggbeeswarm
+  repos:
+    - https://repo.r-wasm.org/
+    - https://webr.bioconductor.org/3.20
+    - https://r-lib.r-universe.dev
 execute: 
   warning: false
 ---
 {{< include ./_extensions/r-wasm/live/_knitr.qmd >}}
 
 
+
+## The binomial distribution
+
+Suppose I want to model _whether_ something happens (1 if so, 0 otherwise).
+For example, whether someone is admitted to a UC Berkeley graduate program.
+We might want to model the importance of factors to the outcome probability $p$.
+One way to do this is with a binomial variable $X \sim Bin(n, p)$, where
+the number of individuals applying is $n$, the probability of admission is $p$, 
+and $X \sim Bin(n, p)$, where $p$ might depend on gender, department & skills.
+Skills for graduate research are notoriously difficult to quantify, so we might
+instead ask whether gender bias is uncomfortably good at predicting admission.
+
+$$
+\begin{align}
+Pr(X = k | n, p) &= \binom{n}{k} p^{k} \left( 1 - p \right)^{n-k} \\
+\binom{n}{k} &= \frac{n!}{k! \left( n - k \right)!} \\
+E\left[X\right] &= np \\
+Var\left[X\right] &= np(1-p)
+\end{align}
+$$
+
+If we model the probability $p$ of the event and use the _logistic_ function,
+$\text{logit}(p) = log\frac{p}{1-p}$, we can perform _logistic regression_. 
+Since $\text{logit}(p)$ can potentially be infinite, we can't perform a least-
+squares fit the way we might for a linear model. But we can finesse this by
+maximizing the likelihood (joint probability of seeing the observed data).
+
+In the next slide we will see an example. For more on maximum likelihood and 
+logistic models, [see this notebook](https://rpubs.com/ttriche/1011627).
+
+---
+
+
+
+### Logistic regression, part 1
+
+Let's model the importance of sex in graduate admissions at Berkeley.
+The `UCBAdmissions` data is included with R, in the `datasets` library.
+*(Need to modify this a bit to reflect the use of Freq rather than 0/1).*
+
+```{webr}
+class(UCBAdmissions)
+berk.data = as.data.frame(UCBAdmissions)
+berk.data$Gender = relevel(berk.data$Gender, ref='Female')
+berk.data$Dept = relevel(berk.data$Dept, ref='F')
+berk.data$Outcome = with(berk.data, ifelse(Admit == "Admitted", 1, 0))
+berk.fit = glm(Outcome ~ Gender + Dept, family=binomial(), data=berk.data)
+
+```
+---
+
+
+
+## Binomial approximations
+
+A rule of thumb is that if $X ~ Bin(n, p)$, $n \geq 20$, and $p \leq .05$, then
+$X \approx Poisson(\lambda = np)$. This is handy for modeling counts of events,
+as we shall soon see. First, an introduction to the Poisson distribution, then
+we will see how combinations of counts can be predicted with this model. 
+
+--- 
+
+
+
 ## The Poisson distribution
 
-Suppose we have rare events that occur at varying times but at a steady rate. 
+Suppose we have events that occur at varying times but at a steady rate. 
 
 A classic example is radioactive decay. At any instant, I can't tell you if a 
 particle will be detected. But if you tell me the isotopic half-life, I can 
@@ -73,7 +143,7 @@ $$
 
 
 
-## Poisson / exponential demo
+## Binomial / Poisson / exponential demo
 
 If the probability of an event per unit observation $\lambda = \frac{1}{10}$, 
 the mean number of observations between events will be $\frac{1}{\lambda} = 10$.
@@ -84,57 +154,6 @@ lambda = 0.1
 Y = rexp(n=n, rate=lambda)
 mean(Y) - (1 / lambda) # small number
 hist(Y)
-```
-
----
-
-
-
-## The binomial distribution
-
-Suppose I don't care how many times an event happens, so much as _whether_ it 
-happens to an individual. For example, whether someone dies, or is admitted to 
-a UC Berkeley graduate program. We might want to model the importance of factors
-to the outcome. One way to do this is with a binomial random variable $X$, where
-the number of individuals who could experience the event is $n$, the probability
-of experiencing the event is $p$, and we say $X \sim Bin(n, p)$. Then
-
-$$
-\begin{align}
-Pr(X = k | n, p) &= \binom{n}{k} p^{k} \left( 1 - p \right)^{n-k} \\
-\binom{n}{k} &= \frac{n!}{k! \left( n - k \right)!} \\
-E\left[X\right] &= np \\
-Var\left[X\right] &= np(1-p)
-\end{align}
-$$
-
-If we model the probability $p$ of the event and use the _logistic_ function,
-$\text{logit}(p) = log\frac{p}{1-p}$, we can perform _logistic regression_. 
-Since $\text{logit}(p)$ can potentially be infinite, we can't perform a least-
-squares fit the way we might for a linear model. But we can finesse this by
-maximizing the likelihood (joint probability of seeing the observed data.
-
-In the next slide we will see an example. For more details on maximum likelihood
-and estimation of logistic models, [see this notebook](https://rpubs.com/ttriche/1011627).
-
----
-
-
-
-### Logistic regression, part 1
-
-Let's model the importance of sex in graduate admissions at Berkeley.
-The `UCBAdmissions` data is included with R, in the `datasets` library.
-(Need to modify this a bit to reflect the use of Freq rather than 0/1).
-
-```{webr}
-class(UCBAdmissions)
-berk.data = as.data.frame(UCBAdmissions)
-berk.data$Gender = relevel(berk.data$Gender, ref='Female')
-berk.data$Dept = relevel(berk.data$Dept, ref='F')
-berk.data$Outcome = with(berk.data, ifelse(Admit == "Admitted", 1, 0))
-berk.fit = glm(Outcome ~ Gender + Dept, family=binomial(), data=berk.data)
-
 ```
 
 
@@ -156,15 +175,59 @@ Pr(Z=z|j,\lambda) &= \frac{z^{j-1}e^{-z/\lambda}}{\lambda^j\Gamma(j)},
 \end{align}
 $$
 
+Recall: if $X \sim Poisson(\lambda)$, $t(x_{i+1}) - t(x_i) \sim Exp(\lambda)$.
+
+---
+
+
+## Gamma-Poisson background I
+
+Now we have the pieces to reconstruct a Poisson process across discrete samples.
+We can reason about how precise our estimate of $\lambda$ is, within and across 
+samples, using a model that captures the sampling distribution of $\lambda$.
+
+The likelihood $\mathcal{L}(\theta|X)$ of model parameters $\theta$ is the joint
+probability of seeing the data $X$ if $\theta$ describes the generating process.
+Note: it's easier to compute $\ell(\theta|X) = log(\mathcal{L}(\theta|X))$.
+
+So if $X \sim Poisson(\lambda)$, the only parameter in $\theta$ is $\lambda$. If
+we label each of $n$ observations as $x_i$, then
+
+$$
+\begin{align}
+Pr(x_i|\lambda) &= \frac{\lambda^{x_i}e^{\lambda}}{x_i!}, for i \in 1,\cdots,n\\
+\mathcal{L}(\lambda|X) &= Pr(X|\lambda) \\
+                       &= \prod_{i=1}^{n}\frac{\lambda^{x_i}e^{\lambda}}{x_i!}\\
+\ell(\lambda|X) &= log(\prod_{i=1}^{n}\frac{\lambda^{x_i}e^{\lambda}}{x_i!}) \\
+                &= \sum_{i=1}^{n} log(
+\end{align}
+$$
+
+It would be nice to have some way to relate this to our sample size $n$. Luckily
+for us, we will accomplish that using the Gamma distribution in the next slide.
+
 ---
 
 
 
-## Gamma-Poisson background
+## Gamma-Poisson background II
 
-Now we have the pieces to reconstruct a Poisson process across discrete samples.
-We can reason about how variable $\lambda$ really is, both within and across 
-samples, using a model that captures the sampling distribution of $\lambda$.
+Suppose that the sole parameter in our Poisson model, $\lambda$, itself has some
+randomness to it. A natural model for this is the Gamma distribution:
+
+$$
+\begin{align}
+\end{align}
+$$
+
+It would be nice to have some way to relate this to our sample size $n$. Luckily
+for us, we will accomplish that using the Gamma distribution in the next slide.
+
+---
+
+
+
+## Gamma-Poisson example 1
 
 Suppose we look at inherited genetic variants in the general population; in a 
 disease; and in a specific type or age group of disease. We might wonder whether
@@ -173,7 +236,8 @@ we might wonder how strong the evidence is for differences between groups. But
 if the disease is rare, we know that our estimate of $\lambda$ cannot be as 
 precise as it would be if the disease was common, because we simply don't have 
 as many observations. The Gamma-Poisson distribution helps us represent this 
-inherent imprecision in our simulations and reason a
+inherent imprecision in our simulations and reason about how that affects our
+comparisons.
 
 --- 
 
@@ -184,7 +248,7 @@ inherent imprecision in our simulations and reason a
 Let's make our examples concrete by looking at germline genetic variants in 
 an unselected control population, versus genetic variants in leukemia patients.
 We will assume that clinically relevant genetic variants are somewhat rare, but
-previous studies have confirmed that at least 5% of leukemia patients harbor 
+previous studies have reported that at least 5% of leukemia patients harbor 
 inherited genetic variants which are rare in the general population. 
 
 --- 
