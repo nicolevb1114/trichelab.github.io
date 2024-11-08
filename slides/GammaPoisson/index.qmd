@@ -30,7 +30,7 @@ execute:
 
 
 
-## The binomial distribution
+## The binomial distribution, part I
 
 Suppose I want to model _whether_ something happens (1 if so, 0 otherwise).
 For example, whether someone is admitted to a UC Berkeley graduate program.
@@ -50,16 +50,27 @@ Var\left[X\right] &= np(1-p)
 \end{align}
 $$
 
-If we model the probability $p$ of the event and use the _logistic_ function,
+---
+
+
+
+## The binomial distribution, part II
+
+Recall from the previous slide that a series of successes or failures can be 
+modeled as $X \sim Bin(n, p)$.  If we model $p$ and use the _logistic_ function,
 $\text{logit}(p) = log\frac{p}{1-p}$, we can perform _logistic regression_. 
+
 Since $\text{logit}(p)$ can potentially be infinite, we can't perform a least-
 squares fit the way we might for a linear model. But we can finesse this by
-maximizing the likelihood (joint probability of seeing the observed data).
+maximizing the likelihood (joint probability of seeing the observed data). And 
+that means we can model $p$ as a function of multiple predictors, like we would
+in a multivariate linear model. 
 
 In the next slide we will see an example. For more on maximum likelihood and 
 logistic models, [see this notebook](https://rpubs.com/ttriche/1011627).
 
 ---
+
 
 
 
