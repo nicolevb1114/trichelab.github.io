@@ -15,14 +15,14 @@ institute: "Van Andel Institute"
 webr:
   packages: 
     - datasets
-    - glmGamPoi
     - ggplot2
-    - ggraph
+    - marginaleffects
+    - GenomicDataCommons
     - ggbeeswarm
+    - ggraph
   repos:
     - https://repo.r-wasm.org/
     - https://webr.bioconductor.org/3.20
-    - https://r-lib.r-universe.dev
 execute: 
   warning: false
 ---
@@ -62,15 +62,12 @@ $\text{logit}(p) = log\frac{p}{1-p}$, we can perform _logistic regression_.
 
 Since $\text{logit}(p)$ can potentially be infinite, we can't perform a least-
 squares fit the way we might for a linear model. But we can finesse this by
-maximizing the likelihood (joint probability of seeing the observed data). And 
-that means we can model $p$ as a function of multiple predictors, like we would
-in a multivariate linear model. 
-
-In the next slide we will see an example. For more on maximum likelihood and 
-logistic models, [see this notebook](https://rpubs.com/ttriche/1011627).
+maximizing the likelihood (joint probability of seeing the observed data). In
+the next slide we will see an example. For more on maximum likelihood and 
+logistic models, [see this notebook](https://rpubs.com/ttriche/1011627). For 
+_much_ more on both, see [marginaleffects.com](https://marginaleffects.com/).
 
 ---
-
 
 
 
@@ -78,27 +75,33 @@ logistic models, [see this notebook](https://rpubs.com/ttriche/1011627).
 
 Let's model the importance of sex in graduate admissions at Berkeley.
 The `UCBAdmissions` data is included with R, in the `datasets` library.
-*(Need to modify this a bit to reflect the use of Freq rather than 0/1).*
+The data is provided as frequency tables, so we use `weights` to indicate this.
 
 ```{webr}
-class(UCBAdmissions)
-berk.data = as.data.frame(UCBAdmissions)
-berk.data$Gender = relevel(berk.data$Gender, ref='Female')
-berk.data$Dept = relevel(berk.data$Dept, ref='F')
-berk.data$Outcome = with(berk.data, ifelse(Admit == "Admitted", 1, 0))
-berk.fit = glm(Outcome ~ Gender + Dept, family=binomial(), data=berk.data)
+library(datasets)
+UCB = as.data.frame(UCBAdmissions)
+UCB$Gender = relevel(UCB$Gender, ref='Female')
+UCB$Admit = with(UCB, ifelse(Admit == "Admitted", 1, 0))
+m = glm(Admit ~ Gender*Dept, family=binomial(), weights=Freq, data=UCB)
 
+library(ggplot2)
+library(marginaleffects)
+p = plot_predictions(m, by=c("Dept","Gender")) 
+p + theme_classic()
 ```
 ---
 
 
 
-## Binomial approximations
+### Logistic regression, part 2
+
+It turns out that many (perhaps most) categorical outcomes can be modeled with 
+a flexible, linear-like model. This is particularly handy if predictors interact
+in complicated ways. To implement it, we must predict _how many_ events occur.
 
 A rule of thumb is that if $X ~ Bin(n, p)$, $n \geq 20$, and $p \leq .05$, then
-$X \approx Poisson(\lambda = np)$. This is handy for modeling counts of events,
-as we shall soon see. First, an introduction to the Poisson distribution, then
-we will see how combinations of counts can be predicted with this model. 
+$X \approx Poisson(\lambda = np)$. This is handy for modeling counts of events. 
+Let's see how moving from logistic to Poisson models could help us do so. 
 
 --- 
 
@@ -111,7 +114,7 @@ Suppose we have events that occur at varying times but at a steady rate.
 A classic example is radioactive decay. At any instant, I can't tell you if a 
 particle will be detected. But if you tell me the isotopic half-life, I can 
 guess how many events you'll see in a day, year, or century. If the intensity
-of decay is $\lambda$, we can reason about its emissions $X$.
+of decay is $\lambda$, I can make good guesses about their counts $X$ over time.
 
 We say $X \sim Pois(\lambda)$: "$X$ is Poisson with intensity $\lambda$".
 
