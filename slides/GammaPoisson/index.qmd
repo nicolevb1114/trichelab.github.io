@@ -78,16 +78,12 @@ The `UCBAdmissions` data is included with R, in the `datasets` library.
 The data is provided as frequency tables, so we use `weights` to indicate this.
 
 ```{webr}
-library(datasets)
 UCB = as.data.frame(UCBAdmissions)
 UCB$Gender = relevel(UCB$Gender, ref='Female')
 UCB$Admit = with(UCB, ifelse(Admit == "Admitted", 1, 0))
-m = glm(Admit ~ Gender*Dept, family=binomial(), weights=Freq, data=UCB)
-
-library(ggplot2)
 library(marginaleffects)
-p = plot_predictions(m, by=c("Dept","Gender")) 
-p + theme_classic()
+m = glm(Admit ~ Gender*Dept, family=binomial(), weights=Freq, data=UCB)
+plot_predictions(m, by=c("Dept","Gender")) 
 ```
 ---
 
