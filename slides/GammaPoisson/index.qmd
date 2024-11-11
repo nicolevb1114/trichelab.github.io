@@ -17,8 +17,8 @@ webr:
     - datasets
     - ggplot2
     - marginaleffects
-    - GenomicDataCommons
     - ggbeeswarm
+    - STRINGdb
     - ggraph
   repos:
     - https://repo.r-wasm.org/
