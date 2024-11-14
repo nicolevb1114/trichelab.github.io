@@ -75,13 +75,14 @@ _much_ more on both, see [marginaleffects.com](https://marginaleffects.com/).
 ### Logistic regression, part 1 {.scrollable}
 
 `UCBAdmissions` is included with R, in the `datasets` library.
-Data is provided as frequencies, so we use `weights` to indicate this.
+Data is provided as frequencies, so we use `weights` in `glm()`.
 
 ```{webr}
+#| fig-height: 3
 library(marginaleffects)
 UCB = as.data.frame(UCBAdmissions)
+UCB$Admit = (UCB$Admit == "Admitted")
 UCB$Gender = relevel(UCB$Gender, ref='Female')
-UCB$Admit = with(UCB, ifelse(Admit == "Admitted", 1, 0))
 m = glm(Admit ~ Gender*Dept, family=binomial(), weights=Freq, data=UCB)
 plot_predictions(m, by=c("Dept","Gender")) 
 ```
