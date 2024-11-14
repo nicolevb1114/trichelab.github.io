@@ -17,6 +17,7 @@ webr:
     - datasets
     - ggplot2
     - marginaleffects
+    - GSALightning
     - ggbeeswarm
     - STRINGdb
     - ggraph
@@ -71,17 +72,16 @@ _much_ more on both, see [marginaleffects.com](https://marginaleffects.com/).
 
 
 
-### Logistic regression, part 1
+### Logistic regression, part 1 {.scrollable}
 
-Let's model the importance of sex in graduate admissions at Berkeley.
-The `UCBAdmissions` data is included with R, in the `datasets` library.
-The data is provided as frequency tables, so we use `weights` to indicate this.
+`UCBAdmissions` is included with R, in the `datasets` library.
+Data is provided as frequencies, so we use `weights` to indicate this.
 
 ```{webr}
+library(marginaleffects)
 UCB = as.data.frame(UCBAdmissions)
 UCB$Gender = relevel(UCB$Gender, ref='Female')
 UCB$Admit = with(UCB, ifelse(Admit == "Admitted", 1, 0))
-library(marginaleffects)
 m = glm(Admit ~ Gender*Dept, family=binomial(), weights=Freq, data=UCB)
 plot_predictions(m, by=c("Dept","Gender")) 
 ```
